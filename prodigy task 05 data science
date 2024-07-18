@@ -1,0 +1,149 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df = pd.read_csv(r"C:\Users\TUFAN\Downloads\Prodigy_InfoTech\Task_5\US_Accidents_March23.csv")
+
+df.head(5)
+
+df.shape
+
+df.info()
+
+df.columns
+
+df.describe().T
+
+df.describe(include=object)
+
+df.isna().sum()
+
+df.drop(columns=['End_Lat','End_Lng','Wind_Chill(F)','Precipitation(in)'],axis=1,inplace=True)
+
+#storing categorical column names to a new variable
+categorical=[i for i in df.columns if df[i].dtype=='O']
+#for categorical values we can replace the null values with the Mode of it
+for i in categorical:
+    df[i].fillna(df[i].mode()[0],inplace=True)
+
+df.drop(columns=['Wind_Speed(mph)', 'Visibility(mi)', 'Pressure(in)', 'Humidity(%)', 'Temperature(F)'], axis=1, inplace=True)
+
+df.isna().sum()
+
+df.duplicated().sum()
+
+city_acc = df['City'].value_counts().sort_values(ascending = False).reset_index()
+
+city_acc
+
+plt.figure(figsize=(15,6))
+sns.barplot(x='City',y='count',data= city_acc.head(10),palette='viridis')
+plt.title("Top 10 cities with most number of accidents")
+plt.ylabel("No of accidents")
+plt.show()
+
+plt.figure(figsize=(15,6))
+sns.barplot(x='City',y='count',data= city_acc.tail(10),palette='viridis')
+plt.title("Bottom 10 cities with least number of accidents")
+plt.ylabel("No of accidents")
+plt.xticks(rotation=45)
+plt.show()
+
+state_acc = df['State'].value_counts().sort_values(ascending = False).reset_index()
+state_acc
+
+## States with most number of accidents
+plt.figure(figsize=(15,6))
+sns.barplot(x='State',y='count',data= state_acc.head(5),palette='rocket')
+plt.title("Top 5 States with most number of accidents")
+plt.ylabel("No of accidents")
+plt.show()
+
+## States with the least number of accidents
+plt.figure(figsize=(15,6))
+sns.barplot(x='State',y='count',data= state_acc.tail(5),palette='rocket')
+plt.title("Bottom 5 States with least number of accidents")
+plt.ylabel("No of accidents")
+plt.show()
+
+
+df['Severity'].value_counts().index
+
+plt.figure(figsize=(8,8))
+plt.pie(df['Severity'].value_counts(),labels=['severe','more-severe','most-severe','least-severe'],autopct="%1.2f%%")
+plt.show()
+
+# Convert the 'Start_Time' column to datetime format
+df['Start_Time'] = pd.to_datetime(df['Start_Time'], errors='coerce')
+
+# Extract the year from the 'Start_Time' column and store it in a new column called 'Year'
+df['Year'] = df['Start_Time'].dt.year
+
+# Display the first few rows to verify
+print(df[['Start_Time', 'Year']].head())
+
+df['Year'].value_counts()
+
+year_count = df['Year'].value_counts().reset_index()
+sns.barplot(x='Year',y='count',data=year_count,palette='rocket')
+plt.title("Years with most number of accidents")
+plt.show()
+df['Start_Time'] = pd.to_datetime(df['Start_Time'], errors='coerce')
+
+
+# Extract the time and store it in a new column 'Time'
+df['Time'] = df['Start_Time'].dt.time
+
+# Function to categorize time
+def categorize_time(time):
+    if pd.isna(time):
+        return 'Unknown'
+    if time >= pd.to_datetime('05:00:00').time() and time < pd.to_datetime('12:00:00').time():
+        return 'Morning'
+    elif time >= pd.to_datetime('12:00:00').time() and time < pd.to_datetime('17:00:00').time():
+        return 'Afternoon'
+    elif time >= pd.to_datetime('17:00:00').time() and time < pd.to_datetime('21:00:00').time():
+        return 'Evening'
+    else:
+        return 'Night'
+
+# Apply the function to create a new column 'Time_Zone'
+df['Time_Zone'] = df['Time'].apply(categorize_time)
+
+# Filter out 'Unknown' time zones for plotting
+filtered_df = df[df['Time_Zone'] != 'Unknown']
+
+
+
+# Count the number of accidents in each timezone
+time_zone_counts = filtered_df['Time_Zone'].value_counts()
+
+# Plot the distribution
+plt.figure(figsize=(10, 6))
+sns.barplot(x=time_zone_counts.index, y=time_zone_counts.values, palette='rocket')
+plt.xlabel('Time of Day')
+plt.ylabel('Number of Accidents')
+plt.title('Number of Accidents by Time of Day')
+plt.show()
+
+plt.figure(figsize=(10, 6))
+sns.histplot(filtered_df['Time_Zone'], bins=4, kde=False, color='green')
+plt.xlabel('Time Zone')
+plt.ylabel('Number of Accidents')
+plt.title('Distribution of Accidents by Time Zone')
+plt.show()
+
+weather = df['Weather_Condition'].value_counts().sort_values(ascending=False).reset_index()
+sns.barplot(x='count',y='Weather_Condition',data=weather[:10],orient='horizontal',palette='viridis')
+plt.show()
+
+plt.figure(figsize=(15,10))
+sns.scatterplot(x=df['Start_Lng'],y=df['Start_Lat'],hue=df['State'])
+plt.legend(loc="lower right")
+plt.show()
+
+plt.figure(figsize=(15,10))
+sns.scatterplot(x=df['Start_Lng'],y=df['Start_Lat'],hue=df['Severity'])
+plt.show()
+
